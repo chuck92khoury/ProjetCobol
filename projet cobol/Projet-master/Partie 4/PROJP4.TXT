@@ -1,0 +1,194 @@
+000100 IDENTIFICATION DIVISION.                                         00010000
+000200 PROGRAM-ID. PROJP4.                                              00020000
+000300                                                                  00030000
+000400 ENVIRONMENT DIVISION.                                            00040000
+000500 CONFIGURATION SECTION.                                           00050000
+000600 SPECIAL-NAMES.                                                   00060000
+000700      DECIMAL-POINT IS COMMA.                                     00070000
+000800                                                                  00080000
+000810 INPUT-OUTPUT SECTION.                                            00081000
+000820 FILE-CONTROL.                                                    00082000
+000830      SELECT BESTP ASSIGN TO BESTPROD                             00083006
+000831      ORGANIZATION IS SEQUENTIAL                                  00083106
+000832      FILE STATUS IS FS-BESTP.                                    00083206
+000840                                                                  00084000
+000850 DATA DIVISION.                                                   00085000
+000860 FILE SECTION.                                                    00086000
+000870 FD BESTP.                                                        00087000
+000880 01 ENR-BESTP PIC X(80).                                          00088000
+000890                                                                  00089000
+000900 WORKING-STORAGE SECTION.                                         00090000
+001000     EXEC SQL                                                     00100000
+001100         INCLUDE SQLCA                                            00110000
+001200     END-EXEC.                                                    00120000
+001300                                                                  00130000
+001400     EXEC SQL                                                     00140000
+001500         INCLUDE ITEMS                                            00150000
+001600     END-EXEC.                                                    00160000
+001601                                                                  00160100
+001602     EXEC SQL                                                     00160200
+001603         INCLUDE PRODUCTS                                         00160300
+001604     END-EXEC.                                                    00160400
+001605                                                                  00160500
+001606     EXEC SQL                                                     00160600
+001607         DECLARE CITEM CURSOR                                     00160700
+001608         FOR                                                      00160800
+001609         SELECT I.P_NO, SUM(I.QUANTITY) AS SUMQ, P.DESCRIPTION    00160900
+001610         FROM API15.ITEMS I                                       00161003
+001620         JOIN API15.PRODUCTS P ON I.P_NO = P.P_NO                 00162003
+001630         GROUP BY I.P_NO, P.DESCRIPTION                           00163007
+001640         ORDER BY SUMQ DESC                                       00164000
+001650     END-EXEC.                                                    00165000
+001660                                                                  00166000
+001661 77 FS-BESTP   PIC X(2).                                          00166106
+001670 77 WS-ANO     PIC 9 VALUE 0.                                     00167000
+001680 77 WS-VAR     PIC 9 VALUE 0.                                     00168000
+001690 77 WS-I       PIC 9(2) VALUE 0.                                  00169000
+001700 77 QUANTITY   PIC S9(3) COMP-3.                                  00170007
+001800                                                                  00180000
+001810 01 LINE-VENTES-START.                                            00181000
+001820    05 FILLER PIC X(8)  VALUE '<VENTES>'.                         00182000
+001830    05 FILLER PIC X(35) VALUE ALL SPACE.                          00183000
+001840                                                                  00184000
+001850 01 LINE-VENTES-END.                                              00185000
+001860    05 FILLER PIC X(9)  VALUE '</VENTES>'.                        00186000
+001870    05 FILLER PIC X(71) VALUE ALL SPACE.                          00187000
+001880                                                                  00188000
+001890 01 LINE-PROD-START.                                              00189000
+001900    05 FILLER PIC X(5)  VALUE ALL SPACE.                          00190000
+001901    05 FILLER PIC X(17) VALUE "<PRODUCT NUMBER='".                00190100
+001902    05 P-NO   PIC X(3).                                           00190200
+001903    05 FILLER PIC X(2)  VALUE "'>".                               00190300
+001904    05 FILLER PIC X(53) VALUE ALL SPACE.                          00190400
+001905                                                                  00190500
+001906 01 LINE-PROD-END.                                                00190600
+001907    05 FILLER PIC X(5)  VALUE ALL SPACE.                          00190700
+001908    05 FILLER PIC X(10) VALUE "</PRODUCT>".                       00190800
+001909    05 FILLER PIC X(65) VALUE ALL SPACE.                          00190900
+001910                                                                  00191000
+001911 01 LINE-RANG.                                                    00191100
+001912    05 FILLER PIC X(10) VALUE ALL SPACE.                          00191200
+001913    05 FILLER PIC X(6)  VALUE '<RANG>'.                           00191300
+001914    05 P-IND  PIC 9(2).                                           00191400
+001915    05 FILLER PIC X(7)  VALUE '</RANG>'.                          00191500
+001916    05 FILLER PIC X(55) VALUE ALL SPACE.                          00191600
+001917                                                                  00191700
+001918 01 LINE-DESIGN PIC X(80) VALUE ALL SPACE.                        00191800
+001919                                                                  00191900
+001920 01 LINE-VOLUME.                                                  00192000
+001930    05 FILLER PIC X(10) VALUE ALL SPACE.                          00193000
+001931    05 FILLER PIC X(8)  VALUE '<VOLUME>'.                         00193100
+001932    05 QUANT  PIC 9(3).                                           00193200
+001933    05 FILLER PIC X(9)  VALUE '</VOLUME>'.                        00193300
+001934    05 FILLER PIC X(50) VALUE ALL SPACE.                          00193400
+001935                                                                  00193500
+001936 PROCEDURE DIVISION.                                              00193600
+001937     EXEC SQL                                                     00193700
+001938         OPEN CITEM                                               00193800
+001939     END-EXEC                                                     00193900
+001940     PERFORM TEST-SQLCODE                                         00194000
+001960     OPEN OUTPUT BESTP                                            00196000
+001961     IF FS-BESTP  NOT = "00"                                      00196106
+001962        DISPLAY "ERREUR D'OUVERTURE : " FS-BESTP                  00196206
+001963        STOP RUN                                                  00196306
+001964     END-IF                                                       00196406
+001965                                                                  00196506
+001970     PERFORM LOOP-ITEMS                                           00197000
+001980     CLOSE BESTP                                                  00198000
+001990     GOBACK.                                                      00199000
+002000                                                                  00200000
+002100 LOOP-ITEMS.                                                      00210000
+002200* AFFICHAGE DE LA LIGNE <VENTES>                                  00220000
+002210     PERFORM AFF-LINE-VENTES-START                                00221000
+002220* LOOP SUR TOUS LES PRODUITS VENDUS                               00222000
+002221     PERFORM FETCH-NEXT-PROD                                      00222100
+002222     PERFORM UNTIL SQLCODE NOT EQUAL ZERO                         00222200
+002223         ADD 1 TO WS-I                                            00222300
+002224* AFFICHER LES 2 PLUS VENDUS                                      00222400
+002225         IF WS-I < 3 THEN                                         00222500
+002226             DISPLAY '------'                                     00222600
+002227             DISPLAY 'RANG : ' WS-I                               00222700
+002228             DISPLAY 'PRODUIT N° : ' ITEMS-P-NO                   00222800
+002229             DISPLAY 'QUANTITE VENDUE : ' QUANTITY                00222900
+002230         END-IF                                                   00223000
+002240* AFFICHAGE DES DIFFERENTES LIGNES                                00224000
+002241         PERFORM AFF-LINE-PROD-START                              00224100
+002242         PERFORM AFF-LINE-RANG                                    00224200
+002243         PERFORM AFF-LINE-DESIGN                                  00224300
+002244         PERFORM AFF-LINE-VOLUME                                  00224400
+002245         PERFORM AFF-LINE-PROD-END                                00224500
+002246                                                                  00224600
+002247         PERFORM FETCH-NEXT-PROD                                  00224700
+002248     END-PERFORM                                                  00224800
+002249* AFFICHAGE DE LA LIGNE </VENTES>                                 00224900
+002250     PERFORM AFF-LINE-VENTES-END                                  00225000
+002251     .                                                            00225100
+002252 FETCH-NEXT-PROD.                                                 00225200
+002253     INITIALIZE ST-ITEMS ST-PRODUCTS QUANTITY                     00225300
+002254* REQUETE POUR GET LES INFOS DANS BDD                             00225400
+002255     EXEC SQL                                                     00225500
+002256         FETCH CITEM                                              00225600
+002257         INTO :ITEMS-P-NO,                                        00225700
+002258              :QUANTITY,                                          00225800
+002259              :PRODUCTS-DESCRIPTION                               00225900
+002260     END-EXEC                                                     00226000
+002261     DISPLAY 'TEST'                                               00226107
+002262     PERFORM TEST-SQLCODE                                         00226200
+002263     .                                                            00226300
+002264                                                                  00226400
+002265 AFF-LINE-VENTES-START.                                           00226500
+002266     WRITE ENR-BESTP FROM LINE-VENTES-START                       00226600
+002267     .                                                            00226700
+002268                                                                  00226800
+002269 AFF-LINE-VENTES-END.                                             00226900
+002270     WRITE ENR-BESTP FROM LINE-VENTES-END                         00227000
+002271     .                                                            00227100
+002272                                                                  00227200
+002273 AFF-LINE-PROD-START.                                             00227300
+002274     MOVE ITEMS-P-NO TO P-NO.                                     00227400
+002275     WRITE ENR-BESTP FROM LINE-PROD-START                         00227500
+002276     .                                                            00227600
+002277                                                                  00227700
+002278 AFF-LINE-PROD-END.                                               00227800
+002279     WRITE ENR-BESTP FROM LINE-PROD-END                           00227900
+002280     .                                                            00228000
+002281                                                                  00228100
+002282 AFF-LINE-RANG.                                                   00228200
+002283     MOVE WS-I TO P-IND                                           00228300
+002284     WRITE ENR-BESTP FROM LINE-RANG                               00228400
+002285     .                                                            00228500
+002286                                                                  00228600
+002287 AFF-LINE-DESIGN.                                                 00228700
+002288     INITIALIZE LINE-DESIGN                                       00228800
+002289     STRING "          "                                          00228900
+002290          DELIMITED BY SIZE                                       00229000
+002291            "<DESIGNATION>"                                       00229100
+002292            PRODUCTS-DESCRIPTION-TEXT(1:PRODUCTS-DESCRIPTION-LEN) 00229200
+002293            "</DESIGNATION>"                                      00229300
+002294          DELIMITED BY "  "                                       00229400
+002295          INTO LINE-DESIGN                                        00229500
+002296     END-STRING                                                   00229600
+002297     WRITE ENR-BESTP FROM LINE-DESIGN                             00229700
+002298     .                                                            00229800
+002299                                                                  00229900
+002300 AFF-LINE-VOLUME.                                                 00230000
+002301     MOVE QUANTITY TO QUANT                                       00230100
+002310     WRITE ENR-BESTP FROM LINE-VOLUME                             00231000
+002311     .                                                            00231100
+002312                                                                  00231200
+002313 TEST-SQLCODE.                                                    00231300
+002314     EVALUATE TRUE                                                00231400
+002315        WHEN SQLCODE = ZERO                                       00231500
+002316            CONTINUE                                              00231600
+002319        WHEN SQLCODE = +100                                       00231900
+002320                                                                  00232000
+002330        WHEN SQLCODE > ZERO                                       00233000
+002340             DISPLAY 'WARNING : ' SQLCODE                         00234000
+002350        WHEN OTHER                                                00235000
+002360             DISPLAY 'ANOMALIE GRAVE : ' SQLCODE                  00236000
+002370             PERFORM ABEND-PROG                                   00237000
+002380     END-EVALUATE.                                                00238000
+002390                                                                  00239000
+002400 ABEND-PROG.                                                      00240000
+002500     COMPUTE WS-ANO = WS-ANO / WS-VAR.                            00250000
+002600                                                                  00260000

@@ -1,0 +1,43 @@
+50010/10/2022100004P010259903      
+50010/10/2022100004P030357502      
+50010/10/2022100004P040100005      
+50202/11/2022300002P020154903      
+50202/11/2022300002P030357505      
+50305/11/2022500001P11     05      
+50407/11/2022400003P14     01      
+50407/11/2022400003P18     04      
+
+
+500 P01 03 25.99
+500 P03 02 35.75
+500 P04 05 10.00
+502 P02 03 15.49
+502 P03 05 35.75
+503 P11 05 30.50
+504 P14 01 899.99
+504 P18 01 21.10
+
+ORDERS-O-NO  
+*************
+             
+ORDERS-S-NO  
+*************
+             
+ORDERS-C-NO  
+*************
+             
+ORDERS-O-DATE
+
+DA    Active users                      INIT  Initiators              
+I     Input queue                       PR    Printers                
+O     Output queue                      PUN   Punches                 
+H     Held output queue                 RDR   Readers                 
+ST    Status of jobs                    LINE  Lines                   
+                                        NODE  Nodes                   
+LOG   System log                        SO    Spool offload           
+MAS   Members in the MAS                                              
+JC    Job classes                       ULOG  User session log        
+SE    Scheduling environments                                         
+RES   WLM resources                                                   
+                                                                      
+END   Exit SDSF                                                       
